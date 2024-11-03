@@ -3,6 +3,7 @@ package telran.employee.dao;
 import telran.employee.model.Employee;
 import telran.employee.model.SalesManager;
 
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 public class CompanyImpl implements Company{
@@ -29,8 +30,8 @@ public class CompanyImpl implements Company{
         for (int i = 0; i < size; i++) {
             if (employees[i].getId() == id) {
                 victim = employees[i];
-                employees[i] = employees[--size];
-                    employees[size] = null;
+                System.arraycopy(employees, i + 1, employees, i, size - i - 1);
+                    employees[--size] = null;
                 break;
             }
         }
@@ -86,13 +87,7 @@ public class CompanyImpl implements Company{
 
     @Override
     public Employee[] findEmployeesHoursGreaterThan(int hours) {
-        Predicate<Employee> predicate = new Predicate<Employee>() {
-            @Override
-            public boolean test(Employee employee) {
-                return employee.getHours() > hours;
-            }
-        };
-        return findEmployeesByPredicate(predicate);
+        return findEmployeesByPredicate(e -> e.getHours() > hours);
     }
 
     @Override
@@ -103,20 +98,15 @@ public class CompanyImpl implements Company{
     }
 
     private Employee[] findEmployeesByPredicate(Predicate<Employee> predicate){
-        int count = 0;
+        Employee[] res = new Employee[size];
+        int j = 0;
         for (int i = 0; i < size; i++) {
-            if(predicate.test(employees[i])){
-                count++;
-            }
-        }
-        Employee[] res = new Employee[count];
-        for (int i = 0, j = 0; j < res.length; i++) {
             if(predicate.test(employees[i])){
                 res[j++] = employees[i];
             }
         }
 
-        return res;
+        return Arrays.copyOf(res, j);
     }
 
 }
