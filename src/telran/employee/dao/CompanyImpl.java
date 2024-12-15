@@ -3,98 +3,86 @@ package telran.employee.dao;
 import telran.employee.model.Employee;
 import telran.employee.model.SalesManager;
 
+import java.util.*;
 import java.util.function.Predicate;
 
 public class CompanyImpl implements Company{
-    private Employee[] employees;
-    private int size;
+    private Map<Integer, Employee> employees;
+    private int capacity;
 
     public CompanyImpl(int capacity){
-        employees = new Employee[capacity];
+        this.capacity = capacity;
+        employees = new HashMap<>();
 
     }
 
+    //O(1)
     @Override
     public boolean addEmployee(Employee employee) {
-        if (employee == null || size == employees.length || findEmployee(employee.getId()) != null){
+        if (employee == null || capacity == employees.size()){
             return false;
         }
-        employees[size++] = employee;
-        return true;
+        return  employees.putIfAbsent(employee.getId(), employee) == null;
+
     }
 
+    //O(1)
     @Override
     public Employee removeEmployee(int id) {
-        Employee victim = null;
-        for (int i = 0; i < size; i++) {
-            if (employees[i].getId() == id) {
-                victim = employees[i];
-                employees[i] = employees[--size];
-                    employees[size] = null;
-                break;
-            }
-        }
-        return victim;
+        return employees.remove(id);
+
     }
 
+    //O(1)
     @Override
     public Employee findEmployee(int id) {
-        for (int i = 0; i < employees.length; i++) {
-            if(employees[i] != null && employees[i].getId() == id){
-                return employees[i];
-            }
-        }
-        return null;
+        return employees.get(id);
     }
-
+//O(1)
     @Override
     public int quantity() {
-        return size;
+        return employees.size();
     }
 
+    //O(n)
     @Override
     public double totalSalary() {
         double sum = 0;
-        for (int i = 0; i < size; i++) {
-            sum += employees[i].calcSalary();
+        for (Employee employee: employees.values()) {
+            sum += employee.calcSalary();
 
         }
         return sum;
     }
 
-
+//O(n)
     @Override
     public double totalSales() {
         double sum = 0;
-        double totalSales;
-        for (int i = 0; i < size; i++) {
-            if (employees[i] instanceof SalesManager) {
-                SalesManager salesManager = (SalesManager) employees[i];
-                sum += salesManager.getSalesValue();
+        for (Employee employee: employees.values()) {
+            if (employee instanceof SalesManager sm) {
+                sum += sm.getSalesValue();
             }
         }
         return sum;
     }
 
+    //O(n)
     @Override
     public void printEmployees() {
-        for (int i = 0; i < employees.length; i++) {
-            System.out.println(employees[i]);
+        for (Employee employee: employees.values()) {
+            System.out.println(employee);
         }
 
     }
-
+    //O(n)
     @Override
     public Employee[] findEmployeesHoursGreaterThan(int hours) {
-        Predicate<Employee> predicate = new Predicate<Employee>() {
-            @Override
-            public boolean test(Employee employee) {
-                return employee.getHours() > hours;
-            }
-        };
-        return findEmployeesByPredicate(predicate);
+
+        return findEmployeesByPredicate(e -> e.getHours() > hours);
     }
 
+    //O(n)
     @Override
     public Employee[] findEmployeesSalaryBetween(int minSalary, int maxSalary) {
         Predicate<Employee> predicate = e -> e.calcSalary() >= minSalary && e.calcSalary() < maxSalary;
@@ -102,21 +90,16 @@ public class CompanyImpl implements Company{
         return findEmployeesByPredicate(predicate);
     }
 
+    //O(n)
     private Employee[] findEmployeesByPredicate(Predicate<Employee> predicate){
-        int count = 0;
-        for (int i = 0; i < size; i++) {
-            if(predicate.test(employees[i])){
-                count++;
-            }
-        }
-        Employee[] res = new Employee[count];
-        for (int i = 0, j = 0; j < res.length; i++) {
-            if(predicate.test(employees[i])){
-                res[j++] = employees[i];
+        List<Employee> res = new ArrayList<>();
+        for (Employee employee: employees.values()) {
+            if(predicate.test(employee)){
+                res.add(employee);
             }
         }
 
-        return res;
+        return res.toArray(new Employee[0]);
     }
 
 }
